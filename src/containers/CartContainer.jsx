@@ -1,23 +1,22 @@
-import { useEffect, useState } from 'react'
-import { menuItems } from '../data/menuData.js'
+import { useMemo, useState } from 'react'
 import CartPage from '../components/CartPage.jsx'
 
-function CartContainer({ cart, onIncrement, onDecrement, onBack }) {
+function CartContainer({ items, isLoading, cart, onIncrement, onDecrement, onBack }) {
   const [note, setNote] = useState('')
   const [orderPlaced, setOrderPlaced] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
 
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 700)
-    return () => clearTimeout(timer)
-  }, [])
-
-  const lines = Object.entries(cart)
-    .map(([id, quantity]) => ({
-      item: menuItems.find((menuItem) => menuItem.id === Number(id)),
-      quantity,
-    }))
-    .filter((line) => line.item)
+  // Cart keys are MenuItem ids from the API, so a line only resolves once the
+  // menu has loaded; anything that no longer exists on the menu is dropped.
+  const lines = useMemo(
+    () =>
+      Object.entries(cart)
+        .map(([id, quantity]) => ({
+          item: items.find((menuItem) => menuItem.id === id),
+          quantity,
+        }))
+        .filter((line) => line.item),
+    [cart, items],
+  )
 
   const totalPrice = lines.reduce((sum, line) => sum + line.item.price * line.quantity, 0)
 

@@ -4,8 +4,10 @@ import HeaderContainer from './containers/HeaderContainer.jsx'
 import MenuContainer from './containers/MenuContainer.jsx'
 import FooterContainer from './containers/FooterContainer.jsx'
 import CartContainer from './containers/CartContainer.jsx'
+import useMenu from './hooks/useMenu.js'
 
 function App() {
+  const { categories, items, isLoading, error, reload } = useMenu()
   const [cart, setCart] = useState({})
   const [searchTerm, setSearchTerm] = useState('')
   const [activeCategory, setActiveCategory] = useState('all')
@@ -31,6 +33,8 @@ function App() {
       {view === 'cart' ? (
         <div className="min-h-screen bg-gray-50">
           <CartContainer
+            items={items}
+            isLoading={isLoading}
             cart={cart}
             onIncrement={handleIncrement}
             onDecrement={handleDecrement}
@@ -46,6 +50,11 @@ function App() {
             onCartClick={() => setView('cart')}
           />
           <MenuContainer
+            categories={categories}
+            items={items}
+            isLoading={isLoading}
+            error={error}
+            onRetry={reload}
             searchTerm={searchTerm}
             activeCategory={activeCategory}
             onCategoryChange={setActiveCategory}
