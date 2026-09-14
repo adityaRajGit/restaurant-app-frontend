@@ -1,4 +1,6 @@
-const BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1').replace(/\/+$/, '')
+import { getToken } from '../auth/authStorage.js'
+
+const BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'https://restaurantapp-self.vercel.app/api/v1/').replace(/\/+$/, '')
 
 /**
  * The backend answers every route with the same envelope:
@@ -10,11 +12,17 @@ const BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/ap
 export async function apiRequest(path, { method = 'GET', body, signal } = {}) {
   let response
 
+  const token = getToken()
+  const headers = {
+    ...(body ? { 'Content-Type': 'application/json' } : {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  }
+
   try {
     response = await fetch(`${BASE_URL}${path}`, {
       method,
       signal,
-      headers: body ? { 'Content-Type': 'application/json' } : undefined,
+      headers: Object.keys(headers).length > 0 ? headers : undefined,
       body: body ? JSON.stringify(body) : undefined,
     })
   } catch (error) {
@@ -37,7 +45,10 @@ export async function apiRequest(path, { method = 'GET', body, signal } = {}) {
 }
 
 function readErrorMessage(payload) {
-  const message = payload?.data?.message
+  // Most routes wrap errors as { data: { message } }, but the auth
+  // middleware (protectRoutes.verifyUser/verifyAdmin) short-circuits before
+  // that wrapper exists and sends a bare { message } instead.
+  const message = payload?.data?.message ?? payload?.message
   if (typeof message === 'string') return message
   if (message && typeof message.message === 'string') return message.message
   return ''
